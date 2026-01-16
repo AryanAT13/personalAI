@@ -105,4 +105,17 @@ def run_agent(user_input: str):
         HumanMessage(content=user_input)
     ]
     response = agent_executor.invoke({"messages": messages})
-    return response["messages"][-1].content
+    
+    # --- THE FIX: HANDLE COMPLEX RESPONSE TYPES ---
+    content = response["messages"][-1].content
+    
+    # If the AI returns a list of blocks (common with Gemini), extract the text
+    if isinstance(content, list):
+        final_text = ""
+        for block in content:
+            if isinstance(block, dict) and "text" in block:
+                final_text += block["text"]
+        return final_text
+    
+    # If it's already a string, just return it
+    return str(content)
