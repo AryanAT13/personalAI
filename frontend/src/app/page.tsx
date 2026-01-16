@@ -11,7 +11,7 @@ export default function Home() {
 
   // Get the Backend URL from the environment variable
   // If it's missing, fallback to localhost for safety
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://personal-ai-backend-qws2.onrender.com";
 
   // Check if we are logged in (Google Auth)
   useEffect(() => {
