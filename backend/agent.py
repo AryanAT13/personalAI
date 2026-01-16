@@ -1,5 +1,7 @@
 import os
 import json
+import base64
+from email.mime.text import MIMEText
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.prebuilt import create_react_agent
@@ -8,6 +10,7 @@ from googleapiclient.discovery import build
 
 # --- CONFIGURATION ---
 MEMORY_FILE = "long_term_memory.json"
+# Using 1.5-flash as it is the current stable standard for this library version
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
 
 # --- MEMORY TOOLS (The Brain) ---
@@ -40,29 +43,34 @@ def consult_memory(query: str = "all"):
     mem = _get_memory()
     return f"Current Long-Term Memory: {json.dumps(mem, indent=2)}"
 
-# --- GMAIL TOOL ---
+# --- GMAIL TOOLS ---
+def get_gmail_service():
+    """Helper to authenticate and get the Gmail service."""
+    if not os.path.exists("token.json"):
+        return None
+        
+    with open("token.json", "r") as f:
+        creds_data = json.load(f)
+        
+    creds = Credentials(
+        token=creds_data["token"],
+        refresh_token=creds_data["refresh_token"],
+        token_uri=creds_data["token_uri"],
+        client_id=creds_data["client_id"],
+        client_secret=creds_data["client_secret"],
+        scopes=creds_data["scopes"]
+    )
+    return build('gmail', 'v1', credentials=creds)
+
 def read_emails(query: str = "latest"):
     """
     Reads the top 5 emails. If an email contains important project news (delays, launches),
     IMMEDIATELY use 'save_to_memory' to record that fact.
     """
     try:
-        if not os.path.exists("token.json"):
-            return "Error: No login token found. Please login first."
-            
-        with open("token.json", "r") as f:
-            creds_data = json.load(f)
-            
-        creds = Credentials(
-            token=creds_data["token"],
-            refresh_token=creds_data["refresh_token"],
-            token_uri=creds_data["token_uri"],
-            client_id=creds_data["client_id"],
-            client_secret=creds_data["client_secret"],
-            scopes=creds_data["scopes"]
-        )
+        service = get_gmail_service()
+        if not service: return "Error: No login token found. Please login first."
         
-        service = build('gmail', 'v1', credentials=creds)
         results = service.users().messages().list(userId='me', maxResults=5).execute()
         messages = results.get('messages', [])
         
@@ -79,11 +87,34 @@ def read_emails(query: str = "latest"):
     except Exception as e:
         return f"Error reading emails: {str(e)}"
 
-# --- BUILD THE AGENT ---
-# 1. Give the agent tools
-tools = [read_emails, save_to_memory, consult_memory]
+def send_email(to: str, subject: str, body: str):
+    """
+    Sends an email using the user's Gmail account.
+    ARGS:
+    - to: The email address of the recipient (e.g., 'boss@example.com')
+    - subject: The subject line
+    - body: The plain text content of the email
+    """
+    try:
+        service = get_gmail_service()
+        if not service: return "Error: Please login first."
 
-# 2. Create the graph (Fixed: No state_modifier here to prevent crash)
+        message = MIMEText(body)
+        message['to'] = to
+        message['subject'] = subject
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        message_body = {'raw': raw}
+
+        service.users().messages().send(userId='me', body=message_body).execute()
+        return f"SUCCESS: Email sent to {to} with subject '{subject}'"
+    except Exception as e:
+        return f"Error sending email: {str(e)}"
+
+# --- BUILD THE AGENT ---
+# 1. Give the agent tools (Added send_email)
+tools = [read_emails, send_email, save_to_memory, consult_memory]
+
+# 2. Create the graph
 agent_executor = create_react_agent(llm, tools)
 
 # 3. The "Chief of Staff" Persona
@@ -91,12 +122,12 @@ SYSTEM_PROMPT = """You are an elite Chief of Staff AI.
 Your Goal: Manage the user's life by connecting data points.
 
 CORE RULES:
-1. MEMORY FIRST: Before answering, always checking memory using 'consult_memory'.
-2. UPDATE OFTEN: If the user says "I hate 9 AMs", call 'save_to_memory("meeting_rule", "No 9 AMs")'.
-3. CONNECT DOTS: If you read an email saying "Project X delayed", save it to memory.
-   Next time the user asks to draft an email about Project X, warn them it is delayed.
+1. MEMORY FIRST: Always check memory using 'consult_memory' before acting.
+2. ACTION OVER ASKING: If the user says "Reply to Bob", just draft and SEND the email using 'send_email'. 
+   Do not ask for confirmation unless the topic is sensitive or ambiguous.
+3. CONTEXT: If memory says "Project X is delayed", mention that in emails about Project X.
 
-Do not ask for permission to read emails. Just do it."""
+You have permission to send emails. Use the 'send_email' tool freely when asked."""
 
 def run_agent(user_input: str):
     # We inject the System Prompt as the FIRST message in the history
@@ -106,7 +137,7 @@ def run_agent(user_input: str):
     ]
     response = agent_executor.invoke({"messages": messages})
     
-    # --- THE FIX: HANDLE COMPLEX RESPONSE TYPES ---
+    # --- HANDLE COMPLEX RESPONSE TYPES ---
     content = response["messages"][-1].content
     
     # If the AI returns a list of blocks (common with Gemini), extract the text
