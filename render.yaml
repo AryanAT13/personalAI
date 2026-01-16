@@ -24,12 +24,7 @@ services:
     plan: free
     dockerContext: ./frontend
     dockerfilePath: ./frontend/Dockerfile
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: personal-ai-backend
-          property: url
+    # DELETED THE PROBLEMATIC ENV VARS SECTION HERE
 
 databases:
   # 3. The Database (Postgres)
