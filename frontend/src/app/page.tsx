@@ -9,18 +9,25 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Get the Backend URL from the environment variable
+  // If it's missing, fallback to localhost for safety
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
   // Check if we are logged in (Google Auth)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("status") === "success") {
       setIsConnected(true);
       setMessages([{ role: "assistant", content: "Hello! I am connected to your Google Workspace. How can I help you today?" }]);
+      
+      // Clean the URL to look professional
+      window.history.replaceState({}, document.title, "/");
     }
   }, []);
 
   const handleLogin = () => {
-    // Redirect to Backend Login
-    window.location.href = "http://localhost:8000/auth/login";
+    // --- FIX: USE DYNAMIC PRODUCTION URL ---
+    window.location.href = `${API_URL}/auth/login`;
   };
 
   const sendMessage = async () => {
@@ -32,19 +39,20 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8000/chat", {
+      // --- FIX: USE DYNAMIC PRODUCTION URL ---
+      const res = await axios.post(`${API_URL}/chat`, {
         message: userMessage,
       });
 
-      // The backend returns { response: "string" }
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: res.data.response },
       ]);
     } catch (error) {
+      console.error(error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Error: Could not reach the agent." },
+        { role: "assistant", content: "Error: Could not reach the agent. Please check if the backend is awake." },
       ]);
     } finally {
       setIsLoading(false);
