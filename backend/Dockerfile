@@ -1,11 +1,10 @@
-# Use official lightweight Python image
-FROM python:3.9-slim
+# Use Python 3.11 to match your local Mac environment
+FROM python:3.11-slim
 
 # Set working directory inside the container
 WORKDIR /app
 
 # Copy requirement file first (for caching)
-# We haven't created requirements.txt yet, we will do that in a second
 COPY requirements.txt .
 
 # Install dependencies
