@@ -14,7 +14,7 @@ app = FastAPI()
 # --- FIX: ALLOW FRONTEND TO TALK TO BACKEND ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["http://localhost:3000", "https://personal-ai-frontend-l6wt.onrender.com"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
