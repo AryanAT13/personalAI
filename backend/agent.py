@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 # --- CONFIGURATION ---
 MEMORY_FILE = "long_term_memory.json"
 # Using 1.5-flash as it is the current stable standard for this library version
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0.3)
 
 # --- MEMORY TOOLS (The Brain) ---
 def _get_memory():
