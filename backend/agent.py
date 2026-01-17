@@ -85,7 +85,10 @@ def consult_memory(query: str = "all"):
         return f"Error reading DB: {str(e)}"
 
 def clear_memory():
-    """Wipes the database memory."""
+    """Wipes the database memory AND the chat history."""
+    global chat_history
+    chat_history = [] # <--- WIPE SHORT TERM MEMORY
+    
     conn = get_db_connection()
     if not conn: return "Error: Could not connect to database."
     try:
@@ -94,7 +97,7 @@ def clear_memory():
         conn.commit()
         cur.close()
         conn.close()
-        return "Memory database has been completely wiped."
+        return "Memory and Chat History have been wiped."
     except Exception as e:
         return f"Error wiping DB: {str(e)}"
 
@@ -198,6 +201,7 @@ tools = [read_emails, send_email, save_to_memory, consult_memory, clear_memory]
 # 2. Create the graph
 agent_executor = create_react_agent(llm, tools)
 
+
 # 3. The "Chief of Staff" Persona
 SYSTEM_PROMPT = """You are an elite Personal Agentic AI Assistant that acts as a Chief of Staff.
 Your Goal: Manage the user's life by connecting data points, but NEVER compromise accuracy or safety.
@@ -225,24 +229,32 @@ CORE RULES:
 You have permission to send emails, prefer verification for important messages.
 You have permission to update memory autonomously. """
 
+chat_history = []
 def run_agent(user_input: str):
-    # We inject the System Prompt as the FIRST message in the history
-    messages = [
-        SystemMessage(content=SYSTEM_PROMPT),
-        HumanMessage(content=user_input)
-    ]
-    response = agent_executor.invoke({"messages": messages})
+    global chat_history
     
-    # --- HANDLE COMPLEX RESPONSE TYPES ---
-    content = response["messages"][-1].content
+    # 1. Initialize history with System Prompt if it's the first message
+    if not chat_history:
+        chat_history.append(SystemMessage(content=SYSTEM_PROMPT))
     
-    # If the AI returns a list of blocks (common with Gemini), extract the text
+    # 2. Add the User's new message to the history
+    chat_history.append(HumanMessage(content=user_input))
+    
+    # 3. Invoke the Agent with the ENTIRE history (Context)
+    response = agent_executor.invoke({"messages": chat_history})
+    
+    # 4. Extract the Agent's response
+    agent_output = response["messages"][-1]
+    
+    # 5. Save the Agent's response to history (So it remembers it next time!)
+    chat_history.append(agent_output)
+    
+    # --- Response Handling ---
+    content = agent_output.content
     if isinstance(content, list):
         final_text = ""
         for block in content:
             if isinstance(block, dict) and "text" in block:
                 final_text += block["text"]
         return final_text
-    
-    # If it's already a string, just return it
     return str(content)
