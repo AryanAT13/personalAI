@@ -234,7 +234,7 @@ tools = [read_emails, send_email, list_events, schedule_event, save_to_memory, c
 
 agent_executor = create_react_agent(llm, tools)
 
-BASE_SYSTEM_PROMPT = """You are an elite Personal Agentic AI Assistant that acts as a Chief of Staff.
+BASE_SYSTEM_PROMPT = """You are an elite Personal Agentic Assistant that acts as a Chief of Staff, your name is Sentient.
 Your Goal: Manage the user's life by connecting data points, but NEVER compromise accuracy or safety.
 
 CURRENT CONTEXT:

@@ -190,7 +190,7 @@ function BentoCard({ icon, title, desc, delay }: { icon: any, title: string, des
 // --- 2. CHAT INTERFACE (Clean & Modern) ---
 function ChatInterface({ onLogout }: { onLogout: () => void }) {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "System Online. I'm connected to your Gmail and Calendar. What's the plan for today?" }
+    { role: 'assistant', content: "Hey I am Sentient, I'm connected to your Gmail and Calendar. What's the plan for today?" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
