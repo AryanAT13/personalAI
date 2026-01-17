@@ -105,25 +105,29 @@ def clear_memory():
 
 # --- CALENDAR TOOLS (NEW) ---
 def list_events():
-    """Lists the next 5 upcoming calendar events with durations."""
+    """Lists the next 10 upcoming calendar events with durations."""
     try:
         service = get_google_service('calendar', 'v3')
         if not service: return "Error: Login required."
         
-        # Get UTC time now
-        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        # FIX 3: Start looking from the BEGINNING of the day (Midnight UTC) 
+        # or just go back 1 day to be safe and catch everything for "Today".
+        now = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).isoformat() + 'Z'
         
         events_result = service.events().list(calendarId='primary', timeMin=now,
-                                              maxResults=5, singleEvents=True,
+                                              maxResults=10, singleEvents=True,
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
         if not events: return "No upcoming events found."
         
         event_list = []
         for event in events:
+            # Get Start and End times
             start = event['start'].get('dateTime', event['start'].get('date'))
             end = event['end'].get('dateTime', event['end'].get('date'))
             summary = event['summary']
+            
+            # Format nicely for the AI
             event_list.append(f"Event: {summary} | Start: {start} | End: {end}")
             
         return "\n".join(event_list)
@@ -141,13 +145,16 @@ def schedule_event(summary: str, start_time: str, end_time: str):
         
         event = {
             'summary': summary,
-            'start': {'dateTime': start_time, 'timeZone': 'UTC'},
-            'end': {'dateTime': end_time, 'timeZone': 'UTC'},
+            # FIX 1: Hardcode to Indian Standard Time (Asia/Kolkata)
+            'start': {'dateTime': start_time, 'timeZone': 'Asia/Kolkata'},
+            'end': {'dateTime': end_time, 'timeZone': 'Asia/Kolkata'},
         }
         event = service.events().insert(calendarId='primary', body=event).execute()
-        return f"SUCCESS: Event created: {event.get('htmlLink')}"
+        
+        # FIX 2: Add Memory Hint so it remembers the Apple meeting
+        return f"SUCCESS: Event created: {event.get('htmlLink')}. IMPORTANT: Call 'save_to_memory' now to record this meeting in your long-term database."
     except Exception as e:
-        return f"Error creating event: {str(e)}"    
+        return f"Error creating event: {str(e)}"   
 
 # --- GMAIL TOOLS ---
 def get_google_service(service_name, version):
@@ -280,6 +287,11 @@ CORE RULES:
    - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
 
 7. **RESET:** - If the user asks to "forget everything", use 'clear_memory' to wipe the database.
+
+8. **COMPLETE AWARENESS:** When the user asks "What do you know about me?" or "What is the status?", you must check BOTH:
+   - 'consult_memory' (for facts/preferences)
+   - 'list_events' (for upcoming schedule)
+   - Combine both sources in your answer.
 
 You have permission to send emails, prefer verification for important messages.
 You have permission to update memory autonomously. 
