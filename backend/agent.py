@@ -2,6 +2,7 @@ import os
 import json
 import base64
 import psycopg2
+import datetime
 from email.mime.text import MIMEText
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -100,16 +101,63 @@ def clear_memory():
         return "Memory and Chat History have been wiped."
     except Exception as e:
         return f"Error wiping DB: {str(e)}"
+    
+
+# --- CALENDAR TOOLS (NEW) ---
+def list_events():
+    """Lists the next 5 upcoming calendar events with durations."""
+    try:
+        service = get_google_service('calendar', 'v3')
+        if not service: return "Error: Login required."
+        
+        # Get UTC time now
+        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        
+        events_result = service.events().list(calendarId='primary', timeMin=now,
+                                              maxResults=5, singleEvents=True,
+                                              orderBy='startTime').execute()
+        events = events_result.get('items', [])
+        if not events: return "No upcoming events found."
+        
+        event_list = []
+        for event in events:
+            # Get Start and End times
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            end = event['end'].get('dateTime', event['end'].get('date'))
+            summary = event['summary']
+            
+            # Format nicely for the AI
+            event_list.append(f"Event: {summary} | Start: {start} | End: {end}")
+            
+        return "\n".join(event_list)
+    except Exception as e:
+        return f"Error reading calendar: {str(e)}"
+
+def schedule_event(summary: str, start_time: str, end_time: str):
+    """
+    Schedules a meeting. 
+    IMPORTANT: Dates must be ISO strings, e.g., '2026-01-20T10:00:00'
+    """
+    try:
+        service = get_google_service('calendar', 'v3')
+        if not service: return "Error: Login required."
+        
+        event = {
+            'summary': summary,
+            'start': {'dateTime': start_time, 'timeZone': 'UTC'},
+            'end': {'dateTime': end_time, 'timeZone': 'UTC'},
+        }
+        event = service.events().insert(calendarId='primary', body=event).execute()
+        return f"SUCCESS: Event created: {event.get('htmlLink')}"
+    except Exception as e:
+        return f"Error creating event: {str(e)}"    
 
 # --- GMAIL TOOLS ---
-def get_gmail_service():
-    """Helper to authenticate and get the Gmail service."""
+def get_google_service(service_name, version):
     if not os.path.exists("token.json"):
         return None
-        
     with open("token.json", "r") as f:
         creds_data = json.load(f)
-        
     creds = Credentials(
         token=creds_data["token"],
         refresh_token=creds_data["refresh_token"],
@@ -118,7 +166,7 @@ def get_gmail_service():
         client_secret=creds_data["client_secret"],
         scopes=creds_data["scopes"]
     )
-    return build('gmail', 'v1', credentials=creds)
+    return build(service_name, version, credentials=creds)
 
 def read_emails(search_term: str = "latest"):
     """
@@ -127,7 +175,7 @@ def read_emails(search_term: str = "latest"):
     - If search_term is specific, searches for it.
     """
     try:
-        service = get_gmail_service()
+        service = get_google_service('gmail', 'v1')
         if not service: return "Error: No login token found. Please login first."
         
         if search_term == "latest":
@@ -180,7 +228,7 @@ def send_email(to: str, subject: str, body: str):
     - body: The plain text content of the email
     """
     try:
-        service = get_gmail_service()
+        service = get_google_service('gmail', 'v1')
         if not service: return "Error: Please login first."
 
         message = MIMEText(body)
@@ -196,7 +244,7 @@ def send_email(to: str, subject: str, body: str):
 
 # --- BUILD THE AGENT ---
 # 1. Give the agent tools (Added send_email)
-tools = [read_emails, send_email, save_to_memory, consult_memory, clear_memory]
+tools = [read_emails, send_email, list_events, schedule_event, save_to_memory, consult_memory, clear_memory]
 
 # 2. Create the graph
 agent_executor = create_react_agent(llm, tools)
@@ -221,13 +269,20 @@ CORE RULES:
 4. **DRAFT VS SEND:** - If the user says "Draft a reply", generate the text and ask "Shall I send this?". DO NOT use the 'send_email' tool yet.
    - If the user says "Send an email", you may use 'send_email' immediately.
 
-5. **INTELLIGENT INTERVENTION:** - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
+5. **CALENDAR MANAGEMENT:** - **Check First:** BEFORE scheduling, ALWAYS call 'list_events' to see what is already booked.
+   - **Conflict Check:** If 'list_events' shows a meeting from 10:00 to 11:00, DO NOT book another one at 10:30.
+   - **Duration:** If the user doesn't specify a duration, assume 1 hour. Calculate the 'end_time' accordingly.
+   - **ISO Format:** You must use this format: 'YYYY-MM-DDTHH:MM:SS' (e.g., '2026-01-20T14:00:00').
+   - **Date Calculation:** Use "Today's Date" (provided above) to calculate "Tomorrow" or "Next Monday" accurately.   
+
+6. **INTELLIGENT INTERVENTION:** - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
    - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
 
-6. **RESET:** - If the user asks to "forget everything", use 'clear_memory' to wipe the database.
+7. **RESET:** - If the user asks to "forget everything", use 'clear_memory' to wipe the database.
 
 You have permission to send emails, prefer verification for important messages.
-You have permission to update memory autonomously. """
+You have permission to update memory autonomously. 
+You have permission to manage and update calendar autonomously. """
 
 chat_history = []
 def run_agent(user_input: str):
