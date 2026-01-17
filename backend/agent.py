@@ -293,13 +293,20 @@ chat_history = []
 def run_agent(user_input: str):
     global chat_history
     
-    now = datetime.datetime.utcnow().strftime("%A, %Y-%m-%d %H:%M:%S UTC")
+    # 1. CALCULATE IST TIME (UTC + 5:30)
+    utc_now = datetime.datetime.utcnow()
+    ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
     
-    current_system_prompt = BASE_SYSTEM_PROMPT.format(current_time=now)
+    # Format nicely as: "Sunday, 2026-01-18 01:51:00 IST"
+    formatted_time = ist_now.strftime("%A, %Y-%m-%d %H:%M:%S IST")
+    
+    # 2. Inject IST time into the Base Prompt
+    current_system_prompt = BASE_SYSTEM_PROMPT.format(current_time=formatted_time)
     
     if not chat_history:
         chat_history.append(SystemMessage(content=current_system_prompt))
     else:
+        # FORCE update the first message so the Agent always knows the REAL local time
         chat_history[0] = SystemMessage(content=current_system_prompt)
     
     chat_history.append(HumanMessage(content=user_input))
