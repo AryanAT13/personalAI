@@ -74,7 +74,7 @@ function LandingPage() {
         </div>
         <button 
           onClick={handleLogin}
-          className="px-5 py-2 text-sm font-medium text-slate-700 hover:text-black hover:bg-white/50 rounded-full transition-all"
+          className="px-5 py-2 cursor-pointer text-sm font-medium text-slate-700 hover:text-black hover:bg-white/50 rounded-full transition-all"
         >
           Sign In
         </button>
@@ -128,7 +128,7 @@ function LandingPage() {
         >
           <button 
             onClick={handleLogin}
-            className="group relative inline-flex items-center gap-3 bg-slate-900 text-white px-10 py-5 rounded-2xl font-semibold text-lg hover:bg-slate-800 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-500/20"
+            className="group relative cursor-pointer inline-flex items-center gap-3 bg-slate-900 text-white px-10 py-5 rounded-2xl font-semibold text-lg hover:bg-slate-800 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-500/20"
           >
             <span>Initialize Agent</span>
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -275,7 +275,7 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
 
         <button 
           onClick={onLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+          className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-sm font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
         >
           <LogOut size={18} /> Disconnect
         </button>
@@ -363,7 +363,7 @@ function ActionButton({ icon, label, onClick }: { icon: any, label: string, onCl
   return (
     <button 
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm"
+      className="w-full flex items-center cursor-pointer gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm"
     >
       {icon}
       <span>{label}</span>

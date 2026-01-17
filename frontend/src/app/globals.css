@@ -8,12 +8,10 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-start-rgb));
-  /* Detailed Dot Grid Pattern */
   background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
-/* Custom Scrollbar for Chat */
 ::-webkit-scrollbar {
   width: 6px;
 }

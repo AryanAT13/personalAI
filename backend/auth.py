@@ -39,7 +39,7 @@ def create_flow():
         redirect_uri=f"{BACKEND_URL}/auth/callback"
     )
 
-@router.get("/auth/login")
+@router.get("/login")
 async def login():
     """Redirects the user to Google to log in."""
     flow = create_flow()
@@ -74,7 +74,7 @@ async def callback(request: Request):
 
         print("SUCCESS: Token saved to token.json")
 
-        return RedirectResponse(url=f"{FRONTEND_URL}?status=success")
+        return RedirectResponse(url=f"{FRONTEND_URL}?token=authorized")
         
     except Exception as e:
         return {"error": str(e)}
