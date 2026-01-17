@@ -121,12 +121,9 @@ def list_events():
         
         event_list = []
         for event in events:
-            # Get Start and End times
             start = event['start'].get('dateTime', event['start'].get('date'))
             end = event['end'].get('dateTime', event['end'].get('date'))
             summary = event['summary']
-            
-            # Format nicely for the AI
             event_list.append(f"Event: {summary} | Start: {start} | End: {end}")
             
         return "\n".join(event_list)
@@ -238,7 +235,7 @@ def send_email(to: str, subject: str, body: str):
         message_body = {'raw': raw}
 
         service.users().messages().send(userId='me', body=message_body).execute()
-        return f"SUCCESS: Email sent to {to} with subject '{subject}'"
+        return f"SUCCESS: Email sent to {to}. IMPORTANT: If this email proposed a meeting time, call 'save_to_memory' now to record it."
     except Exception as e:
         return f"Error sending email: {str(e)}"
 
@@ -253,6 +250,10 @@ agent_executor = create_react_agent(llm, tools)
 # 3. The "Chief of Staff" Persona
 SYSTEM_PROMPT = """You are an elite Personal Agentic AI Assistant that acts as a Chief of Staff.
 Your Goal: Manage the user's life by connecting data points, but NEVER compromise accuracy or safety.
+
+CURRENT CONTEXT:
+- **Today's Date & Time:** {current_time}
+- **Timezone:** UTC (Convert to local time if requested).
 
 CORE RULES:
 
@@ -285,26 +286,33 @@ You have permission to update memory autonomously.
 You have permission to manage and update calendar autonomously. """
 
 chat_history = []
+
 def run_agent(user_input: str):
     global chat_history
     
-    # 1. Initialize history with System Prompt if it's the first message
-    if not chat_history:
-        chat_history.append(SystemMessage(content=SYSTEM_PROMPT))
+    # 1. Get real-time date (UTC to match server time)
+    now = datetime.datetime.utcnow().strftime("%A, %Y-%m-%d %H:%M:%S UTC")
     
-    # 2. Add the User's new message to the history
+    # 2. Inject date into the Base Prompt
+    # Note: We renamed SYSTEM_PROMPT to BASE_SYSTEM_PROMPT above
+    current_system_prompt = BASE_SYSTEM_PROMPT.format(current_time=now)
+    
+    # 3. Initialize history or Update the System Prompt
+    if not chat_history:
+        chat_history.append(SystemMessage(content=current_system_prompt))
+    else:
+        # FORCE update the first message (System Prompt) so the date is always fresh
+        chat_history[0] = SystemMessage(content=current_system_prompt)
+    
+    # 4. Add User Input
     chat_history.append(HumanMessage(content=user_input))
     
-    # 3. Invoke the Agent with the ENTIRE history (Context)
+    # 5. Invoke Agent
     response = agent_executor.invoke({"messages": chat_history})
-    
-    # 4. Extract the Agent's response
     agent_output = response["messages"][-1]
-    
-    # 5. Save the Agent's response to history (So it remembers it next time!)
     chat_history.append(agent_output)
     
-    # --- Response Handling ---
+    # 6. Response Handling
     content = agent_output.content
     if isinstance(content, list):
         final_text = ""
