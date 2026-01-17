@@ -161,24 +161,28 @@ def get_google_service(service_name, version):
 
 def read_emails(search_term: str = "latest"):
     """
-    Reads emails from Gmail. Returns FULL BODY content, not just snippets.
-    - If search_term is 'latest', returns the top 5.
-    - If search_term is specific, searches for it.
+    Reads emails from Gmail. Returns FULL BODY content.
+    - If search_term is 'latest', returns the top 5 distinct emails.
     """
     try:
         service = get_google_service('gmail', 'v1')
         if not service: return "Error: No login token found. Please login first."
         
         if search_term == "latest":
-            results = service.users().messages().list(userId='me', maxResults=5).execute()
+            # UPDATED: Fetch 10 to ensure we have enough valid ones after filtering
+            results = service.users().messages().list(userId='me', maxResults=10).execute()
         else:
-            results = service.users().messages().list(userId='me', q=search_term, maxResults=5).execute()
+            results = service.users().messages().list(userId='me', q=search_term, maxResults=10).execute()
             
         messages = results.get('messages', [])
         if not messages: return "No emails found."
         
         email_data = []
+        count = 0 # NEW: Counter to ensure we stop exactly at 5
+        
         for msg in messages:
+            if count >= 5: break # Stop once we have 5 good emails
+            
             txt = service.users().messages().get(userId='me', id=msg['id']).execute()
             payload = txt.get('payload', {})
             headers = payload.get('headers', [])
@@ -199,9 +203,10 @@ def read_emails(search_term: str = "latest"):
                 if data:
                     body = base64.urlsafe_b64decode(data).decode()
 
-            clean_body = body[:2000] 
-            
-            email_data.append(f"email_id: {msg['id']}\nFROM: {sender}\nSUBJECT: {subject}\nBODY: {clean_body}\n---")
+            if body != "No Body Found":
+                count += 1 # Only increment if we actually found content
+                clean_body = body[:2000] 
+                email_data.append(f"email_id: {msg['id']}\nFROM: {sender}\nSUBJECT: {subject}\nBODY: {clean_body}\n---")
             
         return "\n".join(email_data)
     except Exception as e:
@@ -271,6 +276,11 @@ CORE RULES:
    - 'consult_memory' (for facts/preferences)
    - 'list_events' (for upcoming schedule)
    - Combine both sources in your answer.
+
+9. **EXECUTIVE TONE:** - Be concise. Give the answer and stop.
+   - Do NOT ask generic questions like "Would you like me to help with this?" or "Is there anything else?".
+   - ONLY ask a question if you need specific confirmation to perform an action (e.g., "Shall I send this?").
+   - If summarizing data, just provide the summary bullet points.   
 
 You have permission to send emails, prefer verification for important messages.
 You have permission to update memory autonomously. 
