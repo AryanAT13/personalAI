@@ -61,31 +61,48 @@ def get_gmail_service():
     )
     return build('gmail', 'v1', credentials=creds)
 
-def read_emails(query: str = "latest"):
+def read_emails(search_term: str = "latest"):
     """
-    Reads the top 5 emails. If an email contains important project news (delays, launches),
-    IMMEDIATELY use 'save_to_memory' to record that fact.
+    Reads emails from Gmail. 
+    - If search_term is 'latest', returns the top 10 emails.
+    - If search_term is specific (e.g., 'Project X'), searches for that phrase.
     """
     try:
         service = get_gmail_service()
         if not service: return "Error: No login token found. Please login first."
         
-        results = service.users().messages().list(userId='me', maxResults=5).execute()
+        # Decide: List latest OR Search specific
+        if search_term == "latest":
+            results = service.users().messages().list(userId='me', maxResults=10).execute()
+        else:
+            # Gmail API uses 'q' for search (e.g., "subject:Project X")
+            results = service.users().messages().list(userId='me', q=search_term, maxResults=5).execute()
+            
         messages = results.get('messages', [])
+        
+        if not messages:
+            return "No emails found matching your query."
         
         email_summaries = []
         for msg in messages:
             txt = service.users().messages().get(userId='me', id=msg['id']).execute()
             headers = txt['payload']['headers']
+            
+            # --- UPGRADE: EXTRACT SENDER ---
             subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
+            sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
+            # -------------------------------
+            
             snippet = txt.get('snippet', '')
-            email_summaries.append(f"Subject: {subject} | Body: {snippet}")
+            
+            # Feed the 'From' address to the AI so it knows who to reply to
+            email_summaries.append(f"From: {sender} | Subject: {subject} | Body: {snippet}")
             
         return "\n".join(email_summaries)
         
     except Exception as e:
         return f"Error reading emails: {str(e)}"
-
+    
 def send_email(to: str, subject: str, body: str):
     """
     Sends an email using the user's Gmail account.
