@@ -10,7 +10,7 @@ from googleapiclient.discovery import build
 
 # --- CONFIGURATION ---
 MEMORY_FILE = "long_term_memory.json"
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0.2)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0.1)
 
 # --- MEMORY TOOLS (The Brain) ---
 def _get_memory():
