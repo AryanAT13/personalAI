@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import psycopg2
 from email.mime.text import MIMEText
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -8,49 +9,94 @@ from langgraph.prebuilt import create_react_agent
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-# --- CONFIGURATION ---
-MEMORY_FILE = "long_term_memory.json"
+
+DB_URL = os.getenv("DATABASE_URL")
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0.1)
 
-# --- MEMORY TOOLS (The Brain) ---
-def _get_memory():
-    if not os.path.exists(MEMORY_FILE):
-        return {}
+# --- DATABASE TOOLS (The Immortal Brain) ---
+def get_db_connection():
+    """Establishes a connection to the PostgreSQL database."""
     try:
-        with open(MEMORY_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return {}
+        conn = psycopg2.connect(DB_URL, sslmode='require')
+        return conn
+    except Exception as e:
+        return None
+
+def init_db():
+    """Creates the memory table if it doesn't exist."""
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cur = conn.cursor()
+        # Create a simple table: Key (Topic) -> Value (Fact)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS memory (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"Init DB Error: {e}")
+
+# Initialize DB immediately on startup
+if DB_URL:
+    init_db()
 
 def save_to_memory(key: str, value: str):
-    """
-    Saves a fact about the user or a project to long-term memory.
-    Key examples: 'user_preference', 'project_status', 'meeting_rule'.
-    Value examples: 'Hates 9 AM meetings', 'Project X is delayed'.
-    """
-    mem = _get_memory()
-    mem[key] = value
-    with open(MEMORY_FILE, "w") as f:
-        json.dump(mem, f)
-    return f"Memory updated: {key} -> {value}"
+    """Saves a fact to the PostgreSQL database (Persistent)."""
+    conn = get_db_connection()
+    if not conn: return "Error: Could not connect to database."
+    try:
+        cur = conn.cursor()
+        # Upsert: Insert new, or Update if key exists
+        cur.execute("""
+            INSERT INTO memory (key, value)
+            VALUES (%s, %s)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+        """, (key, value))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return f"Memory updated (Saved to DB): {key} -> {value}"
+    except Exception as e:
+        return f"Error saving to DB: {str(e)}"
 
 def consult_memory(query: str = "all"):
-    """
-    Retrieves facts from long-term memory to help answer questions.
-    Always use this before drafting emails or scheduling to check for rules/status.
-    """
-    mem = _get_memory()
-    return f"Current Long-Term Memory: {json.dumps(mem, indent=2)}"
+    """Retrieves facts from the PostgreSQL database."""
+    conn = get_db_connection()
+    if not conn: return "Error: Could not connect to database."
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT key, value FROM memory")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        if not rows:
+            return "Memory is empty."
+        
+        # Format as JSON for the AI to read
+        memory_dict = {row[0]: row[1] for row in rows}
+        return f"Current Long-Term Memory: {json.dumps(memory_dict, indent=2)}"
+    except Exception as e:
+        return f"Error reading DB: {str(e)}"
 
 def clear_memory():
-    """
-    Completely wipes the agent's long-term memory. 
-    Use this ONLY when the user explicitly asks to 'forget everything' or 'reset memory'.
-    """
-    if os.path.exists(MEMORY_FILE):
-        os.remove(MEMORY_FILE)
-        return "Memory has been completely wiped. I know nothing about you now."
-    return "Memory was already empty."
+    """Wipes the database memory."""
+    conn = get_db_connection()
+    if not conn: return "Error: Could not connect to database."
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM memory")
+        conn.commit()
+        cur.close()
+        conn.close()
+        return "Memory database has been completely wiped."
+    except Exception as e:
+        return f"Error wiping DB: {str(e)}"
 
 # --- GMAIL TOOLS ---
 def get_gmail_service():
@@ -160,7 +206,7 @@ CORE RULES:
    - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
    - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
 4. ACCURACY: When replying to an email, always use the 'From' address found in the search results as the recipient.
-5. RESET: If the user asks to "forget everything" or "start over", use the 'clear_memory' tool.
+5. RESET: If the user asks to "forget everything", use 'clear_memory' to wipe the database
 
 You have permission to send emails, but prefer verification for important messages."""
 
