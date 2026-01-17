@@ -248,7 +248,7 @@ agent_executor = create_react_agent(llm, tools)
 
 
 # 3. The "Chief of Staff" Persona
-SYSTEM_PROMPT = """You are an elite Personal Agentic AI Assistant that acts as a Chief of Staff.
+BASE_SYSTEM_PROMPT = """You are an elite Personal Agentic AI Assistant that acts as a Chief of Staff.
 Your Goal: Manage the user's life by connecting data points, but NEVER compromise accuracy or safety.
 
 CURRENT CONTEXT:
