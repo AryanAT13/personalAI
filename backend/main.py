@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.middleware.cors import CORSMiddleware # <--- NEW IMPORT
+from fastapi.middleware.cors import CORSMiddleware 
 from auth import router as auth_router
 from agent import run_agent
 from pydantic import BaseModel
@@ -11,7 +11,6 @@ load_dotenv()
 
 app = FastAPI()
 
-# --- FIX: ALLOW FRONTEND TO TALK TO BACKEND ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "https://personal-ai-frontend-l6wt.onrender.com"], 
@@ -19,12 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# ----------------------------------------------
 
-# Session Middleware (Required for Google Auth)
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "secret"))
 
-# Include Auth Routes
 app.include_router(auth_router)
 
 class ChatRequest(BaseModel):

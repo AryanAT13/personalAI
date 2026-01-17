@@ -14,7 +14,6 @@ from googleapiclient.discovery import build
 DB_URL = os.getenv("DATABASE_URL")
 llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview", temperature=0.1)
 
-# --- DATABASE TOOLS (The Immortal Brain) ---
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
     try:
@@ -29,7 +28,6 @@ def init_db():
     if not conn: return
     try:
         cur = conn.cursor()
-        # Create a simple table: Key (Topic) -> Value (Fact)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS memory (
                 key TEXT PRIMARY KEY,
@@ -42,7 +40,6 @@ def init_db():
     except Exception as e:
         print(f"Init DB Error: {e}")
 
-# Initialize DB immediately on startup
 if DB_URL:
     init_db()
 
@@ -52,7 +49,6 @@ def save_to_memory(key: str, value: str):
     if not conn: return "Error: Could not connect to database."
     try:
         cur = conn.cursor()
-        # Upsert: Insert new, or Update if key exists
         cur.execute("""
             INSERT INTO memory (key, value)
             VALUES (%s, %s)
@@ -79,7 +75,6 @@ def consult_memory(query: str = "all"):
         if not rows:
             return "Memory is empty."
         
-        # Format as JSON for the AI to read
         memory_dict = {row[0]: row[1] for row in rows}
         return f"Current Long-Term Memory: {json.dumps(memory_dict, indent=2)}"
     except Exception as e:
@@ -88,7 +83,7 @@ def consult_memory(query: str = "all"):
 def clear_memory():
     """Wipes the database memory AND the chat history."""
     global chat_history
-    chat_history = [] # <--- WIPE SHORT TERM MEMORY
+    chat_history = [] 
     
     conn = get_db_connection()
     if not conn: return "Error: Could not connect to database."
@@ -103,15 +98,12 @@ def clear_memory():
         return f"Error wiping DB: {str(e)}"
     
 
-# --- CALENDAR TOOLS (NEW) ---
 def list_events():
     """Lists the next 10 upcoming calendar events with durations."""
     try:
         service = get_google_service('calendar', 'v3')
         if not service: return "Error: Login required."
         
-        # FIX 3: Start looking from the BEGINNING of the day (Midnight UTC) 
-        # or just go back 1 day to be safe and catch everything for "Today".
         now = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).isoformat() + 'Z'
         
         events_result = service.events().list(calendarId='primary', timeMin=now,
@@ -122,12 +114,10 @@ def list_events():
         
         event_list = []
         for event in events:
-            # Get Start and End times
             start = event['start'].get('dateTime', event['start'].get('date'))
             end = event['end'].get('dateTime', event['end'].get('date'))
             summary = event['summary']
             
-            # Format nicely for the AI
             event_list.append(f"Event: {summary} | Start: {start} | End: {end}")
             
         return "\n".join(event_list)
@@ -145,18 +135,15 @@ def schedule_event(summary: str, start_time: str, end_time: str):
         
         event = {
             'summary': summary,
-            # FIX 1: Hardcode to Indian Standard Time (Asia/Kolkata)
             'start': {'dateTime': start_time, 'timeZone': 'Asia/Kolkata'},
             'end': {'dateTime': end_time, 'timeZone': 'Asia/Kolkata'},
         }
         event = service.events().insert(calendarId='primary', body=event).execute()
         
-        # FIX 2: Add Memory Hint so it remembers the Apple meeting
         return f"SUCCESS: Event created: {event.get('htmlLink')}. IMPORTANT: Call 'save_to_memory' now to record this meeting in your long-term database."
     except Exception as e:
         return f"Error creating event: {str(e)}"   
 
-# --- GMAIL TOOLS ---
 def get_google_service(service_name, version):
     if not os.path.exists("token.json"):
         return None
@@ -196,11 +183,9 @@ def read_emails(search_term: str = "latest"):
             payload = txt.get('payload', {})
             headers = payload.get('headers', [])
             
-            # 1. Extract Headers
             subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
             sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
             
-            # 2. Extract Full Body (Decode from Base64)
             body = "No Body Found"
             if 'parts' in payload:
                 for part in payload['parts']:
@@ -214,8 +199,7 @@ def read_emails(search_term: str = "latest"):
                 if data:
                     body = base64.urlsafe_b64decode(data).decode()
 
-            # 3. Clean up the body (truncate if massive to save tokens)
-            clean_body = body[:2000] # Limit to 2000 chars to avoid token overflow
+            clean_body = body[:2000] 
             
             email_data.append(f"email_id: {msg['id']}\nFROM: {sender}\nSUBJECT: {subject}\nBODY: {clean_body}\n---")
             
@@ -246,15 +230,10 @@ def send_email(to: str, subject: str, body: str):
     except Exception as e:
         return f"Error sending email: {str(e)}"
 
-# --- BUILD THE AGENT ---
-# 1. Give the agent tools (Added send_email)
 tools = [read_emails, send_email, list_events, schedule_event, save_to_memory, consult_memory, clear_memory]
 
-# 2. Create the graph
 agent_executor = create_react_agent(llm, tools)
 
-
-# 3. The "Chief of Staff" Persona
 BASE_SYSTEM_PROMPT = """You are an elite Personal Agentic AI Assistant that acts as a Chief of Staff.
 Your Goal: Manage the user's life by connecting data points, but NEVER compromise accuracy or safety.
 
@@ -302,29 +281,21 @@ chat_history = []
 def run_agent(user_input: str):
     global chat_history
     
-    # 1. Get real-time date (UTC to match server time)
     now = datetime.datetime.utcnow().strftime("%A, %Y-%m-%d %H:%M:%S UTC")
     
-    # 2. Inject date into the Base Prompt
-    # Note: We renamed SYSTEM_PROMPT to BASE_SYSTEM_PROMPT above
     current_system_prompt = BASE_SYSTEM_PROMPT.format(current_time=now)
     
-    # 3. Initialize history or Update the System Prompt
     if not chat_history:
         chat_history.append(SystemMessage(content=current_system_prompt))
     else:
-        # FORCE update the first message (System Prompt) so the date is always fresh
         chat_history[0] = SystemMessage(content=current_system_prompt)
     
-    # 4. Add User Input
     chat_history.append(HumanMessage(content=user_input))
     
-    # 5. Invoke Agent
     response = agent_executor.invoke({"messages": chat_history})
     agent_output = response["messages"][-1]
     chat_history.append(agent_output)
     
-    # 6. Response Handling
     content = agent_output.content
     if isinstance(content, list):
         final_text = ""

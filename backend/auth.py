@@ -1,9 +1,6 @@
 import os
 import json
-# --- THE FIX STARTS HERE ---
-# This tells the library: "If Google adds extra scopes (like OpenID), don't crash."
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
-# --- THE FIX ENDS HERE ---
 
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
@@ -14,13 +11,11 @@ load_dotenv()
 
 router = APIRouter()
 
-# Configuration
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-# Scopes: What we are allowed to touch
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/userinfo.email",
@@ -62,12 +57,10 @@ async def callback(request: Request):
         raise HTTPException(status_code=400, detail="Code not found")
 
     try:
-        # Exchange the code for a Token
         flow = create_flow()
         flow.fetch_token(code=code)
         credentials = flow.credentials
 
-        # --- NEW: SAVE TO FILE ---
         creds_data = {
             "token": credentials.token,
             "refresh_token": credentials.refresh_token,
@@ -78,11 +71,9 @@ async def callback(request: Request):
         }
         with open("token.json", "w") as f:
             json.dump(creds_data, f)
-        # -------------------------
 
         print("SUCCESS: Token saved to token.json")
 
-        # Redirect back to the Frontend Dashboard
         return RedirectResponse(url=f"{FRONTEND_URL}?status=success")
         
     except Exception as e:
