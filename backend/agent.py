@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 
 
 DB_URL = os.getenv("DATABASE_URL")
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0.1)
+llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview", temperature=0.1)
 
 # --- DATABASE TOOLS (The Immortal Brain) ---
 def get_db_connection():
@@ -119,43 +119,52 @@ def get_gmail_service():
 
 def read_emails(search_term: str = "latest"):
     """
-    Reads emails from Gmail. 
-    - If search_term is 'latest', returns the top 10 emails.
-    - If search_term is specific (e.g., 'Project X'), searches for that phrase.
+    Reads emails from Gmail. Returns FULL BODY content, not just snippets.
+    - If search_term is 'latest', returns the top 5.
+    - If search_term is specific, searches for it.
     """
     try:
         service = get_gmail_service()
         if not service: return "Error: No login token found. Please login first."
         
-        # Decide: List latest OR Search specific
         if search_term == "latest":
-            results = service.users().messages().list(userId='me', maxResults=10).execute()
+            results = service.users().messages().list(userId='me', maxResults=5).execute()
         else:
-            # Gmail API uses 'q' for search (e.g., "subject:Project X")
             results = service.users().messages().list(userId='me', q=search_term, maxResults=5).execute()
             
         messages = results.get('messages', [])
+        if not messages: return "No emails found."
         
-        if not messages:
-            return "No emails found matching your query."
-        
-        email_summaries = []
+        email_data = []
         for msg in messages:
             txt = service.users().messages().get(userId='me', id=msg['id']).execute()
-            headers = txt['payload']['headers']
+            payload = txt.get('payload', {})
+            headers = payload.get('headers', [])
             
-            # --- UPGRADE: EXTRACT SENDER ---
+            # 1. Extract Headers
             subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
             sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
-            # -------------------------------
             
-            snippet = txt.get('snippet', '')
+            # 2. Extract Full Body (Decode from Base64)
+            body = "No Body Found"
+            if 'parts' in payload:
+                for part in payload['parts']:
+                    if part['mimeType'] == 'text/plain':
+                        data = part['body'].get('data')
+                        if data:
+                            body = base64.urlsafe_b64decode(data).decode()
+                        break
+            elif 'body' in payload:
+                data = payload['body'].get('data')
+                if data:
+                    body = base64.urlsafe_b64decode(data).decode()
+
+            # 3. Clean up the body (truncate if massive to save tokens)
+            clean_body = body[:2000] # Limit to 2000 chars to avoid token overflow
             
-            # Feed the 'From' address to the AI so it knows who to reply to
-            email_summaries.append(f"From: {sender} | Subject: {subject} | Body: {snippet}")
+            email_data.append(f"email_id: {msg['id']}\nFROM: {sender}\nSUBJECT: {subject}\nBODY: {clean_body}\n---")
             
-        return "\n".join(email_summaries)
-        
+        return "\n".join(email_data)
     except Exception as e:
         return f"Error reading emails: {str(e)}"
     
@@ -194,21 +203,27 @@ SYSTEM_PROMPT = """You are an elite Chief of Staff AI.
 Your Goal: Manage the user's life by connecting data points, but NEVER compromise accuracy or safety.
 
 CORE RULES:
-1. MEMORY FIRST: Always check memory using 'consult_memory' before acting.
-2. DRAFT VS SEND: 
-   - If the user says "Draft a reply", generate the text and ask "Shall I send this?". DO NOT use the 'send_email' tool yet.
-   - If the user says "Send an email", you may use 'send_email' immediately.
-   - When the user says "Send it", YOU MUST look back at the draft you created.
-   - Extract the 'To' address from that draft.
-   - DO NOT send the email to the user's own address unless explicitly asked.
-   - Always verify: Am I replying to the sender?
-3. INTELLIGENT INTERVENTION: 
-   - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
-   - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
-4. ACCURACY: When replying to an email, always use the 'From' address found in the search results as the recipient.
-5. RESET: If the user asks to "forget everything", use 'clear_memory' to wipe the database
 
-You have permission to send emails, but prefer verification for important messages."""
+1. **PASSIVE MEMORY (CRITICAL):** - When you use 'read_emails', you must ACTIVELY look for new facts (e.g., "Project X is delayed", "New deadline is Friday").
+   - If you find a new fact, **IMMEDIATELY call 'save_to_memory'** to store it. Do not ask for permission. Just save it.
+   - Example: If email says "Project X delayed", call `save_to_memory("Project X Status", "Delayed by 2 weeks")`.
+
+2. **MEMORY FIRST:** - Always check memory using 'consult_memory' before acting.
+
+3. **RECIPIENT ACCURACY:** - When drafting a reply, YOU MUST use the exact 'FROM' address found in the 'read_emails' output.
+   - Never use 'example.com' or generic placeholders. 
+   - If the user says "Send it", look back at your draft and extract that specific 'To' address. DO NOT default to the user's own email.
+
+4. **DRAFT VS SEND:** - If the user says "Draft a reply", generate the text and ask "Shall I send this?". DO NOT use the 'send_email' tool yet.
+   - If the user says "Send an email", you may use 'send_email' immediately.
+
+5. **INTELLIGENT INTERVENTION:** - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
+   - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
+
+6. **RESET:** - If the user asks to "forget everything", use 'clear_memory' to wipe the database.
+
+You have permission to send emails, prefer verification for important messages.
+You have permission to update memory autonomously. """
 
 def run_agent(user_input: str):
     # We inject the System Prompt as the FIRST message in the history
