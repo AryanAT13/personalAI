@@ -42,6 +42,16 @@ def consult_memory(query: str = "all"):
     mem = _get_memory()
     return f"Current Long-Term Memory: {json.dumps(mem, indent=2)}"
 
+def clear_memory():
+    """
+    Completely wipes the agent's long-term memory. 
+    Use this ONLY when the user explicitly asks to 'forget everything' or 'reset memory'.
+    """
+    if os.path.exists(MEMORY_FILE):
+        os.remove(MEMORY_FILE)
+        return "Memory has been completely wiped. I know nothing about you now."
+    return "Memory was already empty."
+
 # --- GMAIL TOOLS ---
 def get_gmail_service():
     """Helper to authenticate and get the Gmail service."""
@@ -128,7 +138,7 @@ def send_email(to: str, subject: str, body: str):
 
 # --- BUILD THE AGENT ---
 # 1. Give the agent tools (Added send_email)
-tools = [read_emails, send_email, save_to_memory, consult_memory]
+tools = [read_emails, send_email, save_to_memory, consult_memory, clear_memory]
 
 # 2. Create the graph
 agent_executor = create_react_agent(llm, tools)
@@ -150,6 +160,7 @@ CORE RULES:
    - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
    - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
 4. ACCURACY: When replying to an email, always use the 'From' address found in the search results as the recipient.
+5. RESET: If the user asks to "forget everything" or "start over", use the 'clear_memory' tool.
 
 You have permission to send emails, but prefer verification for important messages."""
 
