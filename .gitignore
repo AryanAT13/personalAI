@@ -19,3 +19,21 @@ yarn-debug.log*
 yarn-error.log*
 
 
+# Python
+__pycache__/
+*.pyc
+
+# Environment Variables (CRITICAL)
+.env
+.venv
+env/
+venv/
+
+# Google Secrets (CRITICAL)
+token.json
+credentials.json
+client_secret.json
+
+# IDE
+.vscode/
+.idea/
