@@ -8,6 +8,7 @@ import {
   Send, 
   Calendar, 
   Mail, 
+  Aperture,
   BrainCircuit,
   LogOut,
   CheckCircle2,
@@ -54,18 +55,18 @@ function LandingPage() {
   return (
     <div className="relative overflow-hidden min-h-screen flex flex-col">
       
-      {/* BACKGROUND GLOW BLOBS */}
-      <div className="absolute inset-0 z-[-1] overflow-hidden">
-         <div className="absolute top-0 left-[20%] w-[500px] h-[500px] bg-purple-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-60 animate-blob"></div>
-         <div className="absolute top-0 right-[20%] w-[500px] h-[500px] bg-yellow-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-60 animate-blob animation-delay-2000"></div>
-         <div className="absolute -bottom-32 left-[30%] w-[500px] h-[500px] bg-pink-200 rounded-full mix-blend-multiply filter blur-[80px] opacity-60 animate-blob animation-delay-4000"></div>
-      </div>
+{/* LIVE AURORA BACKGROUND */}
+<div className="absolute inset-0 z-[-1] overflow-hidden">
+    <div className="absolute top-[-10%] left-[20%] w-[700px] h-[700px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob"></div>
+    <div className="absolute top-[-10%] right-[20%] w-[600px] h-[600px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000"></div>
+    <div className="absolute -bottom-32 left-[30%] w-[600px] h-[600px] bg-pink-300/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-4000"></div>
+</div>
 
       {/* GLASS NAVBAR */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-white/50 backdrop-blur-md border-b border-white/20">
         <div className="flex items-center gap-2">
           <div className="bg-slate-900 text-white p-1.5 rounded-lg">
-            <BrainCircuit size={20} />
+            <Aperture size={20} />
           </div>
           <span className="font-bold text-lg tracking-tight">Sentient.</span>
         </div>
@@ -93,29 +94,30 @@ function LandingPage() {
           <span className="text-xs font-semibold text-slate-600 uppercase tracking-widest">System Online v1.0</span>
         </motion.div>
 
-        {/* MAIN HEADING */}
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-6xl md:text-8xl font-bold tracking-tighter text-slate-900 mb-6 leading-[0.95]"
-        >
-          Your Second Brain.<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-gradient">
-            Powered by Logic.
-          </span>
-        </motion.h1>
+{/* MAIN HEADING - Fixed Clipping with pb-4 */}
+<motion.h1 
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.1 }}
+  className="text-6xl md:text-8xl font-bold tracking-tighter text-slate-900 mb-8 leading-[1.1] pb-2"
+>
+  Your Second Brain.<br />
+  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-gradient">
+    Powered by Logic.
+  </span>
+</motion.h1>
 
-        {/* SUBTEXT */}
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-xl md:text-2xl text-slate-500 max-w-2xl mb-12 leading-relaxed"
-        >
-          Stop managing your calendar and inbox manually. 
-          Let <span className="text-slate-900 font-semibold">Sentient</span> handle the boring work so you can focus on building.
-        </motion.p>
+{/* SUBTEXT - Sentient on new line with Glow */}
+<motion.p 
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.2 }}
+  className="text-xl md:text-2xl text-slate-500 max-w-2xl mb-12 leading-relaxed"
+>
+  Stop managing your calendar and inbox manually.<br />
+  Let <span className="block mt-2 text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-sm">Sentient</span>
+  handle the boring work so you can focus on building.
+</motion.p>
 
         {/* CTA BUTTON */}
         <motion.div 
@@ -166,20 +168,24 @@ function LandingPage() {
     </div>
   );
 }
-
 function BentoCard({ icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 + delay }}
-      className="bg-white/70 backdrop-blur-md border border-white/50 p-8 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all"
+      className="group relative bg-white/60 backdrop-blur-xl border border-white/40 p-8 rounded-3xl shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 overflow-hidden"
     >
-      <div className="bg-slate-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
-        {icon}
+      {/* Subtle Hover Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/0 via-indigo-50/0 to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      <div className="relative z-10">
+        <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] group-hover:scale-110 transition-transform duration-300">
+          {icon}
+        </div>
+        <h3 className="font-bold text-xl mb-3 text-slate-900 tracking-tight">{title}</h3>
+        <p className="text-slate-500 leading-relaxed font-medium">{desc}</p>
       </div>
-      <h3 className="font-bold text-xl mb-3 text-slate-900 tracking-tight">{title}</h3>
-      <p className="text-slate-500 leading-relaxed font-medium">{desc}</p>
     </motion.div>
   );
 }
@@ -269,6 +275,47 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
         </div>
+
+
+        {/* MEMORY USAGE WIDGET (Fills the empty space) */}
+<div className="mt-auto mb-6 bg-slate-900 rounded-2xl p-5 text-white relative overflow-hidden">
+  {/* Decorative Background Blob */}
+  <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
+  
+  <div className="relative z-10">
+    <div className="flex items-center gap-2 mb-3">
+      <BrainCircuit size={16} className="text-indigo-400" />
+      <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Neural Core</span>
+    </div>
+    
+    <div className="space-y-3">
+      <div>
+        <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+          <span>Memory Usage</span>
+          <span>84%</span>
+        </div>
+        <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-[84%]"></div>
+        </div>
+      </div>
+      
+      <div>
+        <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+          <span>Context Window</span>
+          <span>2.4k / 1M</span>
+        </div>
+        <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-full bg-slate-500 w-[15%]"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
+      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+      <span className="text-xs font-medium text-slate-300">Learning Active</span>
+    </div>
+  </div>
+</div>
 
         <button 
           onClick={onLogout}
