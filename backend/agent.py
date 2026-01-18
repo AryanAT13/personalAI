@@ -144,6 +144,34 @@ def schedule_event(summary: str, start_time: str, end_time: str):
     except Exception as e:
         return f"Error creating event: {str(e)}"   
 
+def delete_event(event_title: str):
+    """
+    Deletes a calendar event by its title. 
+    It searches for upcoming events matching the title and deletes the first match.
+    """
+    try:
+        service = get_google_service('calendar', 'v3')
+        if not service: return "Error: Login required."
+        
+        # 1. Find the event first
+        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        events_result = service.events().list(calendarId='primary', timeMin=now,
+                                              q=event_title, # Search query
+                                              maxResults=5, singleEvents=True).execute()
+        events = events_result.get('items', [])
+        
+        if not events:
+            return f"Error: Could not find any upcoming event with title '{event_title}' to delete."
+        
+        # 2. Delete the first matching event
+        target_event = events[0]
+        service.events().delete(calendarId='primary', eventId=target_event['id']).execute()
+        
+        return f"SUCCESS: Deleted event '{target_event['summary']}'."
+    except Exception as e:
+        return f"Error deleting event: {str(e)}"
+
+
 def get_google_service(service_name, version):
     if not os.path.exists("token.json"):
         return None
@@ -235,7 +263,7 @@ def send_email(to: str, subject: str, body: str):
     except Exception as e:
         return f"Error sending email: {str(e)}"
 
-tools = [read_emails, send_email, list_events, schedule_event, save_to_memory, consult_memory, clear_memory]
+tools = [read_emails, send_email, list_events, schedule_event, delete_event, save_to_memory, consult_memory, clear_memory]
 
 agent_executor = create_react_agent(llm, tools)
 
@@ -266,6 +294,7 @@ CORE RULES:
    - **Duration:** If the user doesn't specify a duration, assume 1 hour. Calculate the 'end_time' accordingly.
    - **ISO Format:** You must use this format: 'YYYY-MM-DDTHH:MM:SS' (e.g., '2026-01-20T14:00:00').
    - **Date Calculation:** Use "Today's Date" (provided above) to calculate "Tomorrow" or "Next Monday" accurately.   
+   - **Rescheduling:** To change an event time, you must FIRST call 'delete_event' to remove the old one, AND THEN call 'schedule_event' to create the new one.
 
 6. **INTELLIGENT INTERVENTION:** - If the user asks for a 10 AM meeting, but memory says "Hates 10 AMs", CHANGE it to 11 AM in the draft.
    - CRITICAL: If you change a detail based on memory, you MUST explain why and ask for confirmation before sending.
