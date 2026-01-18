@@ -101,7 +101,7 @@ This project utilizes a Microservices Architecture deployed on Render.
 * **Backend Service:** Deployed as a Web Service (Python/FastAPI) running inside a Docker Container.
 * **Database:** Managed PostgreSQL instance on Render.
 
-### 4.CI/CD Pipeline
+### 4. CI/CD Pipeline
 Deployment is fully automated. Pushing to the main branch triggers Render's build pipeline, which:
 
 * Builds the Docker image from backend/Dockerfile.
