@@ -61,7 +61,7 @@ function LandingPage() {
           <div className="bg-slate-900 text-white p-1.5 rounded-lg">
             <Aperture size={20} />
           </div>
-          <span className="font-bold text-lg tracking-tight">Sentient.</span>
+          <span className="font-bold text-lg tracking-tight">Sentient</span>
         </div>
         <button 
           onClick={handleLogin}
@@ -230,7 +230,7 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
           <div className="bg-slate-900 text-white p-2 rounded-xl shadow-lg shadow-indigo-500/20">
             <Aperture size={24} />
           </div>
-          <span className="font-bold text-xl tracking-tight text-slate-900">Sentient.</span>
+          <span className="font-bold text-xl tracking-tight text-slate-900">Sentient</span>
         </div>
 
         <div className="flex-1 space-y-6">
@@ -296,7 +296,7 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
       <main className="flex-1 flex flex-col relative bg-[#F8FAFC]">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-10">
-           <span className="font-bold text-lg">Sentient.</span>
+           <span className="font-bold text-lg">Sentient</span>
            <button onClick={onLogout}><LogOut size={20} className="text-slate-500"/></button>
         </div>
 
