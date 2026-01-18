@@ -6,7 +6,7 @@ from agent import run_agent
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from agent import run_agent, get_next_event_details 
+from agent import run_agent, get_upcoming_events_list
 
 load_dotenv()
 
@@ -36,10 +36,10 @@ def chat(request: ChatRequest):
 
 @app.get("/next-event")
 def get_next_event():
-    event = get_next_event_details()
-    if not event:
-        return {"title": "No Upcoming Events", "time": "Clear Schedule"}
-    return event
+    events = get_upcoming_events_list()
+    if not events:
+        return [] # Return empty list if nothing found
+    return events
 
 @app.get("/")
 def read_root():

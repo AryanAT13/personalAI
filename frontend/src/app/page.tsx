@@ -184,17 +184,17 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [nextEvent, setNextEvent] = useState({ title: "Checking...", time: "--:--" });
+  const [events, setEvents] = useState<any[]>([]);
 
 const fetchNextEvent = async () => {
   try {
     const res = await fetch(`${BACKEND_URL}/next-event`);
     if (res.ok) {
       const data = await res.json();
-      setNextEvent(data);
+      setEvents(data);
     }
   } catch (e) {
-    console.error("Failed to fetch event");
+    console.error("Failed to fetch events");
   }
 };
 
@@ -284,33 +284,47 @@ useEffect(() => {
         </div>
 
 
-{/* NEXT UP WIDGET (Dynamic & Larger) */}
-<div className="mt-auto mb-6 bg-white border border-slate-200 p-6 rounded-3xl shadow-lg relative overflow-hidden transition-all hover:shadow-xl">
-  {/* Decorative Color Strip */}
-  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
+{/* UPCOMING EVENTS DASHBOARD (Fills remaining space) */}
+<div className="flex-1 mt-6 mb-6 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden flex flex-col min-h-0">
   
-  <div className="flex items-center gap-2 mb-3 text-slate-400 text-xs font-bold uppercase tracking-widest">
-    <Clock size={14} className="text-indigo-500" />
-    <span>Up Next</span>
-  </div>
-  
-  {/* Dynamic Title */}
-  <h4 className="font-bold text-slate-900 text-lg leading-snug mb-2 line-clamp-2">
-    {nextEvent.title}
-  </h4>
-  
-  {/* Dynamic Time */}
-  <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-semibold">
-    <span>{nextEvent.time}</span>
-  </div>
-  
-  {/* Live Pulse Animation (Only shows if there is a real event) */}
-  {nextEvent.title !== "No Upcoming Events" && (
-    <div className="absolute top-5 right-5 flex h-3 w-3">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+  {/* Header */}
+  <div className="p-4 border-b border-slate-100 bg-slate-50/50 backdrop-blur-sm sticky top-0 z-10">
+    <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest">
+      <Clock size={12} className="text-indigo-500" />
+      <span>Agenda</span>
     </div>
-  )}
+  </div>
+
+  {/* Scrollable List */}
+  <div className="overflow-y-auto p-2 space-y-2 custom-scrollbar flex-1">
+    {events.length === 0 ? (
+      <div className="text-center py-8 text-slate-400 text-sm">
+        No upcoming events
+      </div>
+    ) : (
+      events.map((evt, i) => (
+        <div key={i} className="group flex items-center gap-3 p-3 hover:bg-slate-50 rounded-2xl transition-colors border border-transparent hover:border-slate-100">
+          {/* Time Badge */}
+          <div className="flex-shrink-0 bg-indigo-50 text-indigo-600 text-xs font-bold px-2 py-2 rounded-lg min-w-[60px] text-center">
+            {evt.time}
+          </div>
+          
+          {/* Event Details */}
+          <div className="min-w-0">
+            <h4 className="text-sm font-semibold text-slate-800 truncate leading-tight">
+              {evt.title}
+            </h4>
+            <p className="text-[10px] text-slate-400 truncate">
+              Google Calendar
+            </p>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+
+  {/* Decorative Bottom Fade */}
+  <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
 </div>
 
         <button 

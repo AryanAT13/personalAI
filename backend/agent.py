@@ -321,37 +321,39 @@ def run_agent(user_input: str):
     return str(content)
 
 
-def get_next_event_details():
-    """Helper: Gets the single next upcoming event for the UI Widget."""
+def get_upcoming_events_list():
+    """Helper: Gets the next 10 upcoming events for the UI Widget."""
     try:
         service = get_google_service('calendar', 'v3')
-        if not service: return None
+        if not service: return []
         
         # Get current time
         now = datetime.datetime.utcnow().isoformat() + 'Z'
         
-        # Fetch only the 1 next event
+        # Fetch next 10 events
         events_result = service.events().list(calendarId='primary', timeMin=now,
-                                              maxResults=1, singleEvents=True,
+                                              maxResults=10, singleEvents=True,
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
         
-        if not events: return None
+        if not events: return []
         
-        event = events[0]
-        summary = event.get('summary', 'Busy')
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        
-        # Simple Time Formatting (ISO to 10:00 AM)
-        formatted_time = start
-        try:
-            # Parse ISO string (e.g., 2026-01-18T10:00:00+05:30)
-            if 'T' in start:
-                dt_obj = datetime.datetime.fromisoformat(start)
-                formatted_time = dt_obj.strftime("%I:%M %p") # Returns "10:00 AM"
-        except:
-            pass
+        dashboard_data = []
+        for event in events:
+            summary = event.get('summary', 'Busy')
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            
+            # Simple Time Formatting
+            formatted_time = start
+            try:
+                if 'T' in start:
+                    dt_obj = datetime.datetime.fromisoformat(start)
+                    formatted_time = dt_obj.strftime("%I:%M %p") # e.g. "04:00 PM"
+            except:
+                pass
+            
+            dashboard_data.append({"title": summary, "time": formatted_time})
 
-        return {"title": summary, "time": formatted_time}
+        return dashboard_data
     except Exception:
-        return None
+        return []
