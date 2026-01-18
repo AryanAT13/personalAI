@@ -15,13 +15,11 @@ import {
   Clock
 } from 'lucide-react';
 
-// --- CONFIG ---
-const BACKEND_URL = "https://personal-ai-backend-qws2.onrender.com"; // Your Render URL
+const BACKEND_URL = "https://personal-ai-backend-qws2.onrender.com"; 
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Check auth on load
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -48,7 +46,6 @@ export default function Home() {
   );
 }
 
-// --- 1. LANDING PAGE (Aesthetic: "Light & Glowy") ---
 function LandingPage() {
   const handleLogin = () => {
     window.location.href = `${BACKEND_URL}/login`;
