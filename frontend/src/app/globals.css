@@ -18,27 +18,23 @@ body {
   color: rgb(var(--foreground-rgb));
   background-color: #ffffff;
   
-  /* THE ALIVE BACKGROUND (Updated to Light/Glowy Colors) */
+  /* UPDATED: Increased opacity from 0.4 to 0.7 so colors are vivid */
   background-image: 
-    /* 1. Top Left: Soft Purple */
-    radial-gradient(at 0% 0%, rgba(192, 132, 252, 0.4) 0px, transparent 50%),
-    /* 2. Top Right: Bright Cyan */
-    radial-gradient(at 100% 0%, rgba(34, 211, 238, 0.4) 0px, transparent 50%),
-    /* 3. Bottom Center: Hot Pink */
-    radial-gradient(at 50% 100%, rgba(244, 114, 182, 0.4) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(192, 132, 252, 0.7) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(34, 211, 238, 0.7) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(244, 114, 182, 0.7) 0px, transparent 50%);
     
   background-size: 200% 200%;
   animation: mesh 20s ease infinite; 
 }
 
-/* Updated Overlay: Lighter and subtler */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  /* Reduced from 0.85 to 0.3 so colors are visible */
-  background: rgba(255, 255, 255, 0.3); 
-  backdrop-filter: blur(80px); /* Smooths the blobs together */
+  /* UPDATED: Reduced white overlay from 0.3 to 0.05 (Almost clear) */
+  background: rgba(255, 255, 255, 0.05); 
+  backdrop-filter: blur(80px);
   z-index: -1;
   pointer-events: none;
 }
