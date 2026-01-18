@@ -158,7 +158,7 @@ function LandingPage() {
       </div>
 
       <div className="py-6 text-center text-slate-400 text-sm">
-        <p>Built for the Future Hackathon 2026</p>
+        <p>Built for Sentellent Hiring Challenge.</p>
       </div>
     </div>
   );
