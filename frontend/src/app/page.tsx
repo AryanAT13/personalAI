@@ -291,7 +291,7 @@ useEffect(() => {
   <div className="p-4 border-b border-slate-100 bg-slate-50/50 backdrop-blur-sm sticky top-0 z-10">
     <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest">
       <Clock size={12} className="text-indigo-500" />
-      <span>Agenda</span>
+      <span>Timeline</span>
     </div>
   </div>
 

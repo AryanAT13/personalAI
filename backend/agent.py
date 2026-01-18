@@ -322,15 +322,13 @@ def run_agent(user_input: str):
 
 
 def get_upcoming_events_list():
-    """Helper: Gets the next 10 upcoming events for the UI Widget."""
+    """Helper: Gets the next 10 upcoming events, filtering out birthdays/holidays."""
     try:
         service = get_google_service('calendar', 'v3')
         if not service: return []
         
-        # Get current time
         now = datetime.datetime.utcnow().isoformat() + 'Z'
         
-        # Fetch next 10 events
         events_result = service.events().list(calendarId='primary', timeMin=now,
                                               maxResults=10, singleEvents=True,
                                               orderBy='startTime').execute()
@@ -339,20 +337,31 @@ def get_upcoming_events_list():
         if not events: return []
         
         dashboard_data = []
+        ignored_keywords = ["birthday", "holiday", "anniversary"]
+
         for event in events:
             summary = event.get('summary', 'Busy')
+            
+            if any(keyword in summary.lower() for keyword in ignored_keywords):
+                continue
+
             start = event['start'].get('dateTime', event['start'].get('date'))
             
-            # Simple Time Formatting
             formatted_time = start
             try:
                 if 'T' in start:
                     dt_obj = datetime.datetime.fromisoformat(start)
-                    formatted_time = dt_obj.strftime("%I:%M %p") # e.g. "04:00 PM"
+                    formatted_time = dt_obj.strftime("%I:%M %p") 
+                else:
+                    dt_obj = datetime.datetime.strptime(start, "%Y-%m-%d")
+                    formatted_time = dt_obj.strftime("%b %d")
             except:
                 pass
             
             dashboard_data.append({"title": summary, "time": formatted_time})
+            
+            if len(dashboard_data) >= 10:
+                break
 
         return dashboard_data
     except Exception:
