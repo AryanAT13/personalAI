@@ -94,17 +94,15 @@ function LandingPage() {
           <span className="text-xs font-semibold text-slate-600 uppercase tracking-widest">System Online v1.0</span>
         </motion.div>
 
-{/* MAIN HEADING - Fixed Clipping with pb-4 */}
-{/* MAIN HEADING - Added 'py-4' to fix the clipped fullstop */}
 <motion.h1 
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ delay: 0.1 }}
   className="text-6xl md:text-8xl font-bold tracking-tighter text-slate-900 mb-6 leading-[0.95] py-4"
 >
-  Your Second Brain.<br />
+  Your Second Brain<br />
   <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600">
-    Powered by Logic.
+    Powered by Logic
   </span>
 </motion.h1>
 
