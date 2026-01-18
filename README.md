@@ -74,8 +74,8 @@ AWS didn't like my debit cards, cancelled 4 of them! so couldn't set up billing.
 
 ```bash
 # Clone the repository
-git clone [https://github.com/yourusername/sentient.git](https://github.com/yourusername/sentient.git)
-cd sentient
+git clone https://github.com/AryanAT13/personalAI.git
+cd personalAI
 
 # Setup Backend Environment
 cd backend
