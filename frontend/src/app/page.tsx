@@ -55,13 +55,6 @@ function LandingPage() {
   return (
     <div className="relative overflow-hidden min-h-screen flex flex-col">
       
-{/* LIVE AURORA BACKGROUND */}
-<div className="absolute inset-0 z-[-1] overflow-hidden">
-    <div className="absolute top-[-10%] left-[20%] w-[700px] h-[700px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob"></div>
-    <div className="absolute top-[-10%] right-[20%] w-[600px] h-[600px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000"></div>
-    <div className="absolute -bottom-32 left-[30%] w-[600px] h-[600px] bg-pink-300/40 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-4000"></div>
-</div>
-
       {/* GLASS NAVBAR */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-white/50 backdrop-blur-md border-b border-white/20">
         <div className="flex items-center gap-2">
