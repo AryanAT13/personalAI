@@ -183,6 +183,26 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const [nextEvent, setNextEvent] = useState({ title: "Checking...", time: "--:--" });
+
+const fetchNextEvent = async () => {
+  try {
+    const res = await fetch(`${BACKEND_URL}/next-event`);
+    if (res.ok) {
+      const data = await res.json();
+      setNextEvent(data);
+    }
+  } catch (e) {
+    console.error("Failed to fetch event");
+  }
+};
+
+// Initial load
+useEffect(() => {
+  fetchNextEvent();
+}, []);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -218,6 +238,7 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
       setMessages(prev => [...prev, { role: 'assistant', content: "⚠️ Error connecting to neural core. Please try again." }]);
     } finally {
       setIsLoading(false);
+      fetchNextEvent();
     }
   };
 
@@ -263,25 +284,33 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
         </div>
 
 
-{/* NEXT UP WIDGET (Replaces Neural Core) */}
-<div className="mt-auto mb-6 bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden">
-  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
-  <div className="flex items-center gap-2 mb-2 text-slate-500 text-xs font-bold uppercase tracking-wider">
-    <Clock size={12} />
+{/* NEXT UP WIDGET (Dynamic & Larger) */}
+<div className="mt-auto mb-6 bg-white border border-slate-200 p-6 rounded-3xl shadow-lg relative overflow-hidden transition-all hover:shadow-xl">
+  {/* Decorative Color Strip */}
+  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
+  
+  <div className="flex items-center gap-2 mb-3 text-slate-400 text-xs font-bold uppercase tracking-widest">
+    <Clock size={14} className="text-indigo-500" />
     <span>Up Next</span>
   </div>
-  <h4 className="font-semibold text-slate-900 text-sm leading-tight mb-1">
-    Review Project Devpulse
-  </h4>
-  <p className="text-slate-500 text-xs">
-    10:00 AM • Google Meet
-  </p>
   
-  {/* Subtle Pulse Animation */}
-  <div className="absolute top-4 right-4 flex h-2 w-2">
-    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+  {/* Dynamic Title */}
+  <h4 className="font-bold text-slate-900 text-lg leading-snug mb-2 line-clamp-2">
+    {nextEvent.title}
+  </h4>
+  
+  {/* Dynamic Time */}
+  <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-semibold">
+    <span>{nextEvent.time}</span>
   </div>
+  
+  {/* Live Pulse Animation (Only shows if there is a real event) */}
+  {nextEvent.title !== "No Upcoming Events" && (
+    <div className="absolute top-5 right-5 flex h-3 w-3">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+    </div>
+  )}
 </div>
 
         <button 

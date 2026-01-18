@@ -6,6 +6,7 @@ from agent import run_agent
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
+from agent import run_agent, get_next_event_details 
 
 load_dotenv()
 
@@ -31,6 +32,14 @@ def chat(request: ChatRequest):
     """Send a message to the AI Agent."""
     response = run_agent(request.message)
     return {"response": response}
+
+
+@app.get("/next-event")
+def get_next_event():
+    event = get_next_event_details()
+    if not event:
+        return {"title": "No Upcoming Events", "time": "Clear Schedule"}
+    return event
 
 @app.get("/")
 def read_root():
