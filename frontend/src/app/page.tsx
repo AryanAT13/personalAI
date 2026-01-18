@@ -93,9 +93,9 @@ function LandingPage() {
           transition={{ delay: 0.1 }}
           className="text-6xl md:text-8xl font-bold tracking-tighter text-slate-900 mb-6 leading-[0.95] py-4"
         >
-          Your Second Brain<br />
+          Your Second Brain.<br />
           <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600 pr-2">
-            Powered by Logic
+            Powered by Logic.
           </span>
         </motion.h1>
 
