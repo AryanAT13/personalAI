@@ -95,28 +95,28 @@ function LandingPage() {
         </motion.div>
 
 {/* MAIN HEADING - Fixed Clipping with pb-4 */}
+{/* MAIN HEADING - Added 'py-4' to fix the clipped fullstop */}
 <motion.h1 
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ delay: 0.1 }}
-  className="text-6xl md:text-8xl font-bold tracking-tighter text-slate-900 mb-8 leading-[1.1] pb-2"
+  className="text-6xl md:text-8xl font-bold tracking-tighter text-slate-900 mb-6 leading-[0.95] py-4"
 >
   Your Second Brain.<br />
-  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-gradient">
+  <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600">
     Powered by Logic.
   </span>
 </motion.h1>
 
-{/* SUBTEXT - Sentient on new line with Glow */}
+{/* SUBTEXT - Fixed Alignment */}
 <motion.p 
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ delay: 0.2 }}
-  className="text-xl md:text-2xl text-slate-500 max-w-2xl mb-12 leading-relaxed"
+  className="text-xl md:text-2xl text-slate-600 max-w-2xl mb-12 leading-relaxed"
 >
-  Stop managing your calendar and inbox manually.<br />
-  Let <span className="block mt-2 text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-sm">Sentient</span>
-  handle the boring work so you can focus on building.
+  Stop managing your calendar and inbox manually. 
+  Let <span className="inline-block font-extrabold text-slate-900 border-b-4 border-indigo-200 px-1 mx-1">Sentient</span> handle the boring work so you can focus on building.
 </motion.p>
 
         {/* CTA BUTTON */}
@@ -135,31 +135,26 @@ function LandingPage() {
         </motion.div>
 
         {/* BENTO GRID FEATURES */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 max-w-6xl w-full text-left"
-        >
-          <BentoCard 
-            icon={<Mail className="text-blue-600" />}
-            title="Inbox Zero"
-            desc="Reads, summarizes, and drafts replies. It knows your writing style."
-            delay={0}
-          />
-          <BentoCard 
-            icon={<Calendar className="text-orange-500" />}
-            title="Time Keeper"
-            desc="Manages schedule conflicts and creates events across timezones."
-            delay={0.1}
-          />
-          <BentoCard 
-            icon={<BrainCircuit className="text-purple-600" />}
-            title="Active Memory"
-            desc="Remembers your projects, preferences, and constraints forever."
-            delay={0.2}
-          />
-        </motion.div>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 max-w-6xl w-full text-left">
+  <BentoCard 
+    icon={<Mail className="text-blue-600" />}
+    title="Inbox Intelligence"
+    desc="Autonomously drafts replies and surfaces what actually matters."
+    delay={0}
+  />
+  <BentoCard 
+    icon={<Calendar className="text-orange-500" />}
+    title="Time Sovereignty"
+    desc="Protects your deep work hours and resolves scheduling conflicts."
+    delay={0.1}
+  />
+  <BentoCard 
+    icon={<BrainCircuit className="text-purple-600" />}
+    title="Infinite Context"
+    desc="A memory that never fades. It recalls every detail, project, and preference."
+    delay={0.2}
+  />
+</div>
       </div>
 
       <div className="py-6 text-center text-slate-400 text-sm">
@@ -242,7 +237,7 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
       <aside className="hidden md:flex w-72 flex-col bg-white border-r border-slate-200 p-6">
         <div className="flex items-center gap-3 mb-10">
           <div className="bg-slate-900 text-white p-2 rounded-xl shadow-lg shadow-indigo-500/20">
-            <BrainCircuit size={24} />
+            <Aperture size={24} />
           </div>
           <span className="font-bold text-xl tracking-tight text-slate-900">Sentient.</span>
         </div>
@@ -277,43 +272,24 @@ function ChatInterface({ onLogout }: { onLogout: () => void }) {
         </div>
 
 
-        {/* MEMORY USAGE WIDGET (Fills the empty space) */}
-<div className="mt-auto mb-6 bg-slate-900 rounded-2xl p-5 text-white relative overflow-hidden">
-  {/* Decorative Background Blob */}
-  <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
+{/* NEXT UP WIDGET (Replaces Neural Core) */}
+<div className="mt-auto mb-6 bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+  <div className="flex items-center gap-2 mb-2 text-slate-500 text-xs font-bold uppercase tracking-wider">
+    <Clock size={12} />
+    <span>Up Next</span>
+  </div>
+  <h4 className="font-semibold text-slate-900 text-sm leading-tight mb-1">
+    Review Project Devpulse
+  </h4>
+  <p className="text-slate-500 text-xs">
+    10:00 AM • Google Meet
+  </p>
   
-  <div className="relative z-10">
-    <div className="flex items-center gap-2 mb-3">
-      <BrainCircuit size={16} className="text-indigo-400" />
-      <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Neural Core</span>
-    </div>
-    
-    <div className="space-y-3">
-      <div>
-        <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-          <span>Memory Usage</span>
-          <span>84%</span>
-        </div>
-        <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-[84%]"></div>
-        </div>
-      </div>
-      
-      <div>
-        <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-          <span>Context Window</span>
-          <span>2.4k / 1M</span>
-        </div>
-        <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-          <div className="h-full bg-slate-500 w-[15%]"></div>
-        </div>
-      </div>
-    </div>
-    
-    <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
-      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-      <span className="text-xs font-medium text-slate-300">Learning Active</span>
-    </div>
+  {/* Subtle Pulse Animation */}
+  <div className="absolute top-4 right-4 flex h-2 w-2">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
   </div>
 </div>
 
