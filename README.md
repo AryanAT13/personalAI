@@ -10,6 +10,8 @@
 
 **Sentient** is not just a chatbot; it is an agentic workflow engine designed to reclaim your time. Unlike standard assistants that wait for commands, Sentient actively manages your digital life.
 
+**Demo Video**: https://drive.google.com/file/d/1O41VfIk7UnfQQ8_OedxftvDhYJ9MUOM3/view?usp=sharing
+
 It connects a **Reactive Frontend** (Next.js/Tailwind) with a **Cognitive Backend** (LangGraph/Gemini), allowing it to:
 * **Read & Reason:** Analyze emails and calendar for action items, not just keywords.
 * **Act Autonomously:** Schedule, reschedule, and delete meetings based on deep context.
