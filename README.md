@@ -10,6 +10,8 @@
 
 **Sentient** is not just a chatbot; it is an agentic workflow engine designed to reclaim your time. Unlike standard assistants that wait for commands, Sentient actively manages your digital life.
 
+**Demo Video**: https://drive.google.com/file/d/1O41VfIk7UnfQQ8_OedxftvDhYJ9MUOM3/view?usp=sharing
+
 It connects a **Reactive Frontend** (Next.js/Tailwind) with a **Cognitive Backend** (LangGraph/Gemini), allowing it to:
 * **Read & Reason:** Analyze emails and calendar for action items, not just keywords.
 * **Act Autonomously:** Schedule, reschedule, and delete meetings based on deep context.
@@ -74,8 +76,8 @@ AWS didn't like my debit cards, cancelled 4 of them! so couldn't set up billing.
 
 ```bash
 # Clone the repository
-git clone [https://github.com/yourusername/sentient.git](https://github.com/yourusername/sentient.git)
-cd sentient
+git clone https://github.com/AryanAT13/personalAI.git
+cd personalAI
 
 # Setup Backend Environment
 cd backend
@@ -101,7 +103,7 @@ This project utilizes a Microservices Architecture deployed on Render.
 * **Backend Service:** Deployed as a Web Service (Python/FastAPI) running inside a Docker Container.
 * **Database:** Managed PostgreSQL instance on Render.
 
-### 4.CI/CD Pipeline
+### 4. CI/CD Pipeline
 Deployment is fully automated. Pushing to the main branch triggers Render's build pipeline, which:
 
 * Builds the Docker image from backend/Dockerfile.
